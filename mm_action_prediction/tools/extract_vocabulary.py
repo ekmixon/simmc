@@ -12,7 +12,7 @@ from nltk.tokenize import word_tokenize
 
 def main(args):
     # Read the data, parse the datapoints.
-    print("Reading: {}".format(args["train_json_path"]))
+    print(f'Reading: {args["train_json_path"]}')
     with open(args["train_json_path"], "r") as file_id:
         train_data = json.load(file_id)
     dialog_data = train_data["dialogue_data"]
@@ -40,8 +40,8 @@ def main(args):
     words = [ii[0] for ii in word_counts if ii[1] >= args["threshold_count"]]
     vocabulary = {"word": words}
     # Save answers and vocabularies.
-    print("Identified {} words..".format(len(words)))
-    print("Saving dictionary: {}".format(args["vocab_save_path"]))
+    print(f"Identified {len(words)} words..")
+    print(f'Saving dictionary: {args["vocab_save_path"]}')
     with open(args["vocab_save_path"], "w") as file_id:
         json.dump(vocabulary, file_id)
 

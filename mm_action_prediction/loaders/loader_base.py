@@ -102,7 +102,7 @@ class LoaderParent:
         """Helper to ship numpy arrays to torch.
       """
         # int32 get mapped to int64 and float to double
-        if numpy_array.dtype == np.int32 or numpy_array.dtype == np.int64:
+        if numpy_array.dtype in [np.int32, np.int64]:
             new_type = torch.int64
         elif numpy_array.dtype == np.bool:
             new_type = torch.bool
@@ -126,19 +126,19 @@ class LoaderParent:
             "assist_utt_id",
         ]
         for field in mandatory_fields:
-            assert field in self.raw_data, "{} missing!".format(field)
+            assert field in self.raw_data, f"{field} missing!"
         # Get document frequency of words for both user / assistant utterances.
         IDF = np.ones(self.vocab_size)
         num_inst, max_len = self.raw_data["user_utt_id"].shape
-        for _, dialog_utt in enumerate(self.raw_data["user_utt_id"]):
-            for _, utt_id in enumerate(dialog_utt):
+        for dialog_utt in self.raw_data["user_utt_id"]:
+            for utt_id in dialog_utt:
                 if utt_id == -1:
                     break
                 utt_len = self.raw_data["user_sent_len"][utt_id]
                 utterance = self.raw_data["user_sent"][utt_id, :utt_len]
                 IDF[np.unique(utterance)] += 1
-        for _, dialog_utt in enumerate(self.raw_data["assist_utt_id"]):
-            for _, utt_id in enumerate(dialog_utt):
+        for dialog_utt in self.raw_data["assist_utt_id"]:
+            for utt_id in dialog_utt:
                 if utt_id == -1:
                     break
                 utt_len = self.raw_data["assist_sent_len"][utt_id]

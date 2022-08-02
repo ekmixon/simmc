@@ -73,16 +73,12 @@ def weight_init(m):
                 init.normal_(param.data)
     elif isinstance(m, nn.Embedding):
         init.xavier_normal_(m.weight.data)
-    # Go recursively if nn.Module if parameters exists.
     elif isinstance(m, nn.Module) and len(list(m.parameters())) > 0:
         for child in m.children():
             weight_init(child)
-    else:
-        pass
         # # Uncomment this to figure out if there are uninitialized components.
         # if type(m) not in (nn.CrossEntropyLoss, nn.ReLU):
         #   print('Warning: No initialization found for {0}!'.format(m))
 
 
-if __name__ == "__main__":
-    pass
+pass

@@ -44,7 +44,6 @@ class HierarchicalRecurrentEncoder(nn.Module):
         Returns:
             encoder_outputs: Dict of outputs from the forward pass.
         """
-        encoder_out = {}
         # Flatten to encode sentences.
         batch_size, num_rounds, _ = batch["user_utt"].shape
         encoder_in = support.flatten(batch["user_utt"], batch_size, num_rounds)
@@ -56,9 +55,7 @@ class HierarchicalRecurrentEncoder(nn.Module):
         all_enc_states, enc_states = rnn.dynamic_rnn(
             self.encoder_unit, word_embeds_enc, fake_encoder_len, return_states=True
         )
-        encoder_out["hidden_states_all"] = all_enc_states
-        encoder_out["hidden_state"] = enc_states
-
+        encoder_out = {"hidden_states_all": all_enc_states, "hidden_state": enc_states}
         utterance_enc = enc_states[0][-1]
         new_size = (batch_size, num_rounds, utterance_enc.shape[-1])
         utterance_enc = utterance_enc.reshape(new_size)

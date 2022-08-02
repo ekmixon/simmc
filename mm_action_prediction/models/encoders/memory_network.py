@@ -53,7 +53,6 @@ class MemoryNetworkEncoder(nn.Module):
         Returns:
             encoder_outputs: Dict of outputs from the forward pass.
         """
-        encoder_out = {}
         # Flatten to encode sentences.
         batch_size, num_rounds, _ = batch["user_utt"].shape
         encoder_in = support.flatten(batch["user_utt"], batch_size, num_rounds)
@@ -65,9 +64,7 @@ class MemoryNetworkEncoder(nn.Module):
         all_enc_states, enc_states = rnn.dynamic_rnn(
             self.encoder_unit, word_embeds_enc, fake_encoder_len, return_states=True
         )
-        encoder_out["hidden_states_all"] = all_enc_states
-        encoder_out["hidden_state"] = enc_states
-
+        encoder_out = {"hidden_states_all": all_enc_states, "hidden_state": enc_states}
         utterance_enc = enc_states[0][-1]
         batch["utterance_enc"] = support.unflatten(
             utterance_enc, batch_size, num_rounds
@@ -111,5 +108,4 @@ class MemoryNetworkEncoder(nn.Module):
         attention = self.fact_attention_net(combined_encode)
         attention.masked_fill_(fact_mask, float("-Inf"))
         attention = self.softmax(attention, dim=2)
-        attended_fact = (attention * fact_encode).sum(2)
-        return attended_fact
+        return (attention * fact_encode).sum(2)

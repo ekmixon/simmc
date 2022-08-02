@@ -21,11 +21,10 @@ def flatten(tensor, batch_size, num_rounds):
       flat_tensor: Size [B * N, D1, D2, ...]
     """
     old_size = tensor.shape
-    assert old_size[0] == batch_size, "Expected dim 0 as {}".format(batch_size)
-    assert old_size[1] == num_rounds, "Expected dim 1 as {}".format(num_rounds)
+    assert old_size[0] == batch_size, f"Expected dim 0 as {batch_size}"
+    assert old_size[1] == num_rounds, f"Expected dim 1 as {num_rounds}"
     new_size = (-1,) + old_size[2:]
-    flat_tensor = tensor.reshape(new_size)
-    return flat_tensor
+    return tensor.reshape(new_size)
 
 
 def unflatten(tensor, batch_size, num_rounds):
@@ -41,12 +40,12 @@ def unflatten(tensor, batch_size, num_rounds):
     """
     old_size = tensor.shape
     expected_first_dim = batch_size * num_rounds
-    assert old_size[0] == expected_first_dim, "Expected dim 0 as " "{}".format(
-        expected_first_dim
-    )
+    assert (
+        old_size[0] == expected_first_dim
+    ), f"Expected dim 0 as {expected_first_dim}"
+
     new_size = (batch_size, num_rounds) + old_size[1:]
-    unflat_tensor = tensor.reshape(new_size)
-    return unflat_tensor
+    return tensor.reshape(new_size)
 
 
 def gather_states(all_states, indices):

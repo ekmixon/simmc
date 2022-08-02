@@ -34,5 +34,4 @@ class SelfAttention(nn.Module):
         if mask is not None:
             att_logits.masked_fill_(mask.unsqueeze(-1), float("-inf"))
         att_wts = nn.functional.softmax(att_logits, dim=1)
-        att_features = (att_wts * feature_block).sum(1)
-        return att_features
+        return (att_wts * feature_block).sum(1)

@@ -45,7 +45,7 @@ def evaluate_response_retrieval(
             gt_score = round_scores[gt_index]
             gt_ranks.append(np.sum(np.array(round_scores) > gt_score) + 1)
     gt_ranks = np.array(gt_ranks)
-    print("#Instances evaluated retrieval: {}".format(gt_ranks.size))
+    print(f"#Instances evaluated retrieval: {gt_ranks.size}")
 
     num_instances = gt_ranks.size
     metrics = {
@@ -69,10 +69,10 @@ def evaluate_response_retrieval(
 
 
 def main(args):
-    print("Reading: {}".format(args["retrieval_json_path"]))
+    print(f'Reading: {args["retrieval_json_path"]}')
     with open(args["retrieval_json_path"], "r") as file_id:
         gt_responses = json.load(file_id)
-    print("Reading: {}".format(args["model_score_path"]))
+    print(f'Reading: {args["model_score_path"]}')
     with open(args["model_score_path"], "r") as file_id:
         model_scores = json.load(file_id)
     retrieval_metrics = evaluate_response_retrieval(

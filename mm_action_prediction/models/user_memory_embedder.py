@@ -66,10 +66,7 @@ class UserMemoryEmbedder(nn.Module):
         attended_query, attented_wts = self.multimodal_attend(
             query, multimodal_memory, multimodal_memory
         )
-        multimodal_encode = torch.cat(
-            [attended_query.squeeze(0), encoder_state], dim=-1
-        )
-        return multimodal_encode
+        return torch.cat([attended_query.squeeze(0), encoder_state], dim=-1)
 
     def _setup_category_states(self):
         """Setup category states (focus + memory images).

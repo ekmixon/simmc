@@ -88,7 +88,7 @@ class GenerativeDecoder(nn.Module):
         if self.params["use_gpu"]:
             mask = mask.cuda()
         mask = mask.float().masked_fill(mask == 0, float("-inf"))
-        mask = mask.masked_fill(mask == 1, float(0.0))
+        mask = mask.masked_fill(mask == 1, 0.0)
         return mask
 
     def forward(self, batch, encoder_output):
@@ -239,6 +239,7 @@ class GenerativeDecoder(nn.Module):
             )
             encoder_output["hidden_states_all"] = self.action_fusion_net(fusion_out)
 
+        DIALOG_CONTEXT = "dialog_context"
         for inst_id in range(batch_size):
             for round_id in range(num_rounds):
                 new_output = {}
@@ -246,7 +247,6 @@ class GenerativeDecoder(nn.Module):
                     "user_utt": batch["user_utt"][inst_id, round_id].view(1, 1, -1),
                     "pad_token": batch["pad_token"],
                 }
-                DIALOG_CONTEXT = "dialog_context"
                 if DIALOG_CONTEXT in encoder_output:
                     dialog_context = encoder_output[DIALOG_CONTEXT][inst_id][round_id]
                     new_output[DIALOG_CONTEXT] = dialog_context.view(1, 1, -1)

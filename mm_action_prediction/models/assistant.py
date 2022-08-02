@@ -38,11 +38,12 @@ class Assistant(nn.Module):
         if params["use_gpu"]:
             self = self.cuda()
         # Sharing word embeddings across encoder and decoder.
-        if self.params["share_embeddings"]:
-            if hasattr(self.encoder, "word_embed_net") and hasattr(
-                self.decoder, "word_embed_net"
-            ):
-                self.decoder.word_embed_net = self.encoder.word_embed_net
+        if (
+            self.params["share_embeddings"]
+            and hasattr(self.encoder, "word_embed_net")
+            and hasattr(self.decoder, "word_embed_net")
+        ):
+            self.decoder.word_embed_net = self.encoder.word_embed_net
 
     def forward(self, batch, mode=None):
         """Forward propagation.

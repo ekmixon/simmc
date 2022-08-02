@@ -106,8 +106,7 @@ def get_args_for_furniture_click(stroke):
     entry = json.loads(stroke)
     text_next_state = entry[NEXT_STATE][TEXT_PREFABS_CAROUSEL]
     text_prev_state = entry[PREVIOUS_STATE][TEXT_PREFABS_CAROUSEL]
-    arg = [text for text in text_next_state if text not in text_prev_state]
-    return arg
+    return [text for text in text_next_state if text not in text_prev_state]
 
 
 def get_keystrokes_with_args(raw_keystroke_list, price_dict):
@@ -347,8 +346,7 @@ def get_carousel_prefabs(state):
     Note that this function doesn't check if the visual associated with the
     state would only consist of an in-focus item.
     """
-    return state[PREFABS_IN_CAROUSEL] if state[PREFABS_IN_CAROUSEL] \
-            else state[SHARED_CAROUSEL]
+    return state[PREFABS_IN_CAROUSEL] or state[SHARED_CAROUSEL]
 
 
 def matching_carousels(state1, state2):
@@ -488,17 +486,19 @@ def get_relevant_actions(
         keystroke_name = keystroke[API]
         # SEARCH_FURNITURE keystroke only occurs at the start so no need to
         # include in this check
-        if keystroke_name == NEXT or keystroke_name == PREVIOUS or \
-                keystroke_name == REMOVE_OBJECT_FROM_FOCUS or \
-                keystroke_name == BRING_OBJECT_TO_FOCUS:
+        if keystroke_name in [
+            NEXT,
+            PREVIOUS,
+            REMOVE_OBJECT_FROM_FOCUS,
+            BRING_OBJECT_TO_FOCUS,
+        ]:
             index = _index  # (keeping lint happy)
             break
 
     # for keystrokes which are transformed to the NavigateCarousel action,
     # check did the scene really change, i.e. do the carousel prefabs differ
     # with those from the opening
-    if keystroke_name == NEXT or keystroke_name == PREVIOUS or \
-            keystroke_name == REMOVE_OBJECT_FROM_FOCUS:
+    if keystroke_name in [NEXT, PREVIOUS, REMOVE_OBJECT_FROM_FOCUS]:
         new_scene = keystroke[NEXT_STATE]
         if is_prefab_in_focus(opening_scene) or \
                 not matching_carousels(opening_scene, new_scene):
@@ -509,13 +509,16 @@ def get_relevant_actions(
                     PREVIOUS_STATE: opening_scene,
                     NEXT_STATE: new_scene,
                     ARGS: {
-                        FURNITURE_ID: prefabs[1] if len(prefabs) > 1
+                        FURNITURE_ID: prefabs[1]
+                        if len(prefabs) > 1
                         else prefabs[0],
-                        NAVIGATE_DIRECTION: keystroke_name if keystroke_name == NEXT
-                        or keystroke_name == PREVIOUS else 'Here'
+                        NAVIGATE_DIRECTION: keystroke_name
+                        if keystroke_name in [NEXT, PREVIOUS]
+                        else 'Here',
                     },
                 }
             )
+
         # return as there should be no further scene changing actions
         # after a NavigateCarousel (no further valid actions)
         return relevant_actions, viewed_text_keystrokes, search_results,\
@@ -557,10 +560,11 @@ def get_relevant_actions(
             # ROTATE('front') is redudant when directly following a
             # FOCUS_ON_FURNITURE_ACTION (checking only within turns,
             # not across turns)
-            if direction == 'front' and len(relevant_actions) > 0 and \
-                    relevant_actions[-1][API] == FOCUS_ON_FURNITURE_ACTION:
-                pass
-            else:
+            if (
+                direction != 'front'
+                or len(relevant_actions) <= 0
+                or relevant_actions[-1][API] != FOCUS_ON_FURNITURE_ACTION
+            ):
                 relevant_actions.append(
                     {
                         API: ROTATE_ACTION,
@@ -659,7 +663,7 @@ def extract_actions(input_json_file, save_root, furniture_db, subtask):
         subtask: Single dominant or multiple actions
     """
     # Read the raw data.
-    print("Reading: {}".format(input_json_file))
+    print(f"Reading: {input_json_file}")
     with open(input_json_file, "r") as file_id:
         data = json.load(file_id)
 
@@ -737,7 +741,7 @@ def extract_actions(input_json_file, save_root, furniture_db, subtask):
 
     save_path = input_json_file.split("/")[-1].replace(".json", "_api_calls.json")
     save_path = os.path.join(save_root, save_path)
-    print("Saving: {}".format(save_path))
+    print(f"Saving: {save_path}")
     with open(save_path, "w") as f:
         json.dump(dialogs, f)
 
@@ -790,20 +794,25 @@ def collate_and_insert_actions(
             )
             if search_furniture:
                 candidate_actions = [
-                    action for action in relevant_actions
-                    if action[API] == SEARCH_FURNITURE_ACTION
-                    or action[API] == ADD_TO_CART_ACTION
+                    action
+                    for action in relevant_actions
+                    if action[API]
+                    in [SEARCH_FURNITURE_ACTION, ADD_TO_CART_ACTION]
                 ]
+
 
         # find highest preference action type
         candidate_action_types = [
             action[API] for action in candidate_actions
         ]
-        target_action_type = None
-        for action_type in PREFERENCE_ORDER:
-            if action_type in candidate_action_types:
-                target_action_type = action_type
-                break
+        target_action_type = next(
+            (
+                action_type
+                for action_type in PREFERENCE_ORDER
+                if action_type in candidate_action_types
+            ),
+            None,
+        )
 
         # filter to retain only the highest preference action types
         candidate_actions = [
@@ -816,12 +825,14 @@ def collate_and_insert_actions(
         # action needs to be checked as only it is retained below.
         if target_action_type == GET_INFO_ACTION \
                 and len(candidate_actions) > 1:
-            last_action_attributes = set()
             last_action_furniture_id = \
                     candidate_actions[-1][ARGS][FURNITURE_ID]
-            for action in candidate_actions:
-                if action[ARGS][FURNITURE_ID] == last_action_furniture_id:
-                    last_action_attributes.add(action[ARGS][MATCHES])
+            last_action_attributes = {
+                action[ARGS][MATCHES]
+                for action in candidate_actions
+                if action[ARGS][FURNITURE_ID] == last_action_furniture_id
+            }
+
             # replace multi-attribute requests with a single "info" request
             if len(last_action_attributes) > 1:
                 candidate_actions[-1][ARGS][MATCHES] = "info"
@@ -870,8 +881,7 @@ def gen_getinfo_from_annotation(round_datum, reversed_dialog_coref_map):
     # the attributes, and check system responded
     get_info_attributes = []
     for intent, obj_refs in user_action_refs.items():
-        da_ask_match = da_ask_regex.match(intent)
-        if da_ask_match:
+        if da_ask_match := da_ask_regex.match(intent):
             obj = da_ask_match[1]
             attribute = da_ask_match[2]
             furniture_id = [r[1] for r in obj_refs]
@@ -894,28 +904,21 @@ def gen_getinfo_from_annotation(round_datum, reversed_dialog_coref_map):
                             ):
                                 furniture_id = [r[1] for r in sys_obj_refs]
                                 break  # take the first strict match found.
-                            # else object matches and system attribute is a
-                            # super set of the attribute asked, i.e. 'info'
                             elif (
                                 da_inform_match[1] == obj
                                 and da_inform_match[2] == 'info'
                             ):
                                 furniture_id = [r[1] for r in sys_obj_refs]
                                 # keep looping in case a strict match exists.
-                            # if nothing better so far, accept object mis-match
-                            # (allows for annotation error)
-                            elif (
-                                not furniture_id
-                                and (
-                                    da_inform_match[2] == attribute
-                                    or da_inform_match[2] == 'info'
-                                )
-                            ):
+                            elif not furniture_id and da_inform_match[2] in [
+                                attribute,
+                                'info',
+                            ]:
                                 furniture_id = [r[1] for r in sys_obj_refs]
                                 # keep looping in case something better
-                # if nothing better found
-                if not furniture_id and last_resort_id:
-                    furniture_id = last_resort_id
+            # if nothing better found
+            if not furniture_id and last_resort_id:
+                furniture_id = last_resort_id
             get_info_attributes.append((attribute, furniture_id))
 
     # Check the system responded; at least one DA:INFORM:GET intent with an
@@ -965,12 +968,15 @@ def gen_addtocart_from_annotation(round_datum, reversed_dialog_coref_map):
                 round_datum['turn_label'],
                 reversed_dialog_coref_map
             )
-            furniture_id = []
-            # check for object reference(s) that accompanies the assistant action
-            for act, refs in system_action_refs.items():
-                if 'ADD_TO_CART' in act and refs:
-                    furniture_id = [r[1] for r in refs]
-                    break
+            furniture_id = next(
+                (
+                    [r[1] for r in refs]
+                    for act, refs in system_action_refs.items()
+                    if 'ADD_TO_CART' in act and refs
+                ),
+                [],
+            )
+
             # if object reference missing for assistant action, check if
             # preceding user action mentions ADD_TO_CART and has object refs
             if not furniture_id:
@@ -1002,14 +1008,12 @@ def get_roundwise_dialog_actions(subtask, dialog_actions):
     ignore_actions = ["BringObjectToFocus", "FurnitureClick"]
     turn_carousel_state = get_carousel_state(None)
     roundwise_actions = []
-    for _turn_id, turn_datum in enumerate(dialog_actions):
-        # Report action and supervision for assistant.
-        action_datum = {}
+    for turn_datum in dialog_actions:
         # Defaults.
         cur_action = NONE_ACTION
         cur_supervision = None
         action_output_state = None
-        action_datum["carousel_state"] = copy.deepcopy(turn_carousel_state)
+        action_datum = {"carousel_state": copy.deepcopy(turn_carousel_state)}
         relevant_actions = turn_datum["relevant_apis_with_args"]
         # search_results = turn_datum["current_search_results"]
         if len(relevant_actions) == 1:
@@ -1066,18 +1070,17 @@ def get_roundwise_dialog_actions(subtask, dialog_actions):
                 cur_supervision[ARGS] = {
                     DIRECTION: cur_supervision[ARGS][DIRECTION]
                 }
-            if (
-                cur_action == GET_INFO_ACTION
-                or cur_action == ADD_TO_CART_ACTION
-            ):
+            if cur_action in [GET_INFO_ACTION, ADD_TO_CART_ACTION]:
                 # for GET_INFO_ACTION and ADD_TO_CART_ACTION subtask create a
                 # single reference relative to the carousel
                 furniture_ids = cur_supervision[ARGS][FURNITURE_ID]
                 if turn_carousel_state["focus"]:
-                    if turn_carousel_state["focus"] in furniture_ids:
-                        cur_supervision[ARGS][FURNITURE_ID] = "focus"
-                    else:
-                        cur_supervision[ARGS][FURNITURE_ID] = ""
+                    cur_supervision[ARGS][FURNITURE_ID] = (
+                        "focus"
+                        if turn_carousel_state["focus"] in furniture_ids
+                        else ""
+                    )
+
                 else:
                     in_carousel = False
                     for id in furniture_ids:

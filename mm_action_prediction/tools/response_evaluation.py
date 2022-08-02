@@ -62,10 +62,10 @@ def evaluate_response_generation(
             if record_instance_results:
                 round_datum["bleu"] = bleu_score
                 round_datum["response_len"] = len(normalize_sentence(gt_response))
-    print("#Instances evaluated BLEU: {}".format(len(bleu_scores)))
+    print(f"#Instances evaluated BLEU: {len(bleu_scores)}")
     # Record and save per instance results.
     if record_instance_results:
-        print("Saving per instance result: {}".format(record_instance_results))
+        print(f"Saving per instance result: {record_instance_results}")
         with open(record_instance_results, "w") as file_id:
             json.dump(model_responses, file_id)
 
@@ -77,10 +77,10 @@ def evaluate_response_generation(
 
 
 def main(args):
-    print("Reading: {}".format(args["data_json_path"]))
+    print(f'Reading: {args["data_json_path"]}')
     with open(args["data_json_path"], "r") as file_id:
         gt_responses = json.load(file_id)
-    print("Reading: {}".format(args["model_response_path"]))
+    print(f'Reading: {args["model_response_path"]}')
     with open(args["model_response_path"], "r") as file_id:
         model_responses = json.load(file_id)
 

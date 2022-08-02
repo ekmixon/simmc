@@ -3,6 +3,7 @@
 Author(s): Satwik Kottur
 """
 
+
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import json
@@ -28,7 +29,7 @@ dataloader_args = {
     "data_read_path": args["train_data_path"],
     "get_retrieval_candidates": False
 }
-dataloader_args.update(args)
+dataloader_args |= args
 train_loader = loaders.DataloaderSIMMC(dataloader_args)
 args.update(train_loader.get_data_related_arguments())
 # Initiate the loader for val (DEV) data split.
@@ -39,7 +40,7 @@ if args["eval_data_path"]:
         "data_read_path": args["eval_data_path"],
         "get_retrieval_candidates": args["retrieval_evaluation"]
     }
-    dataloader_args.update(args)
+    dataloader_args |= args
     val_loader = loaders.DataloaderSIMMC(dataloader_args)
 else:
     val_loader = None
@@ -100,7 +101,7 @@ for iter_ind, batch in enumerate(train_loader.get_batch()):
         )
         # Print the best epoch so far.
         best_epoch, best_epoch_dict = support.sort_eval_metrics(eval_dict)[0]
-        print("\nBest Val Performance: Ep {}".format(best_epoch))
+        print(f"\nBest Val Performance: Ep {best_epoch}")
         for item in best_epoch_dict.items():
             print("\t{}: {:.2f}".format(*item))
 
@@ -121,13 +122,11 @@ for iter_ind, batch in enumerate(train_loader.get_batch()):
         if args["save_prudently"]:
             if best_epoch == int(epoch):
                 save_path = os.path.join(args["snapshot_path"], "epoch_best.tar")
-                print("Saving the model: {}".format(save_path))
+                print(f"Saving the model: {save_path}")
                 torch.save(checkpoint_dict, save_path)
         else:
-            save_path = os.path.join(
-                args["snapshot_path"], "epoch_{}.tar".format(int(epoch))
-            )
-            print("Saving the model: {}".format(save_path))
+            save_path = os.path.join(args["snapshot_path"], f"epoch_{int(epoch)}.tar")
+            print(f"Saving the model: {save_path}")
             torch.save(checkpoint_dict, save_path)
         # Save the file with evaluation metrics.
         eval_file = os.path.join(args["snapshot_path"], "eval_metrics.json")

@@ -29,9 +29,8 @@ class Vocabulary:
                 print("done")
             # Setup rest of the object.
             self._setup_vocabulary()
-        else:
-            if verbose:
-                print("Initializing empty vocabulary object..")
+        elif verbose:
+            print("Initializing empty vocabulary object..")
 
     def __contains__(self, key):
         """Check if a word is contained in a vocabulary.
@@ -45,13 +44,13 @@ class Vocabulary:
         # Else add them.
         for special_word in ["<unk>", "<start>", "<end>", "<pad>"]:
             if special_word not in self._words:
-                if not self.immutable:
+                if self.immutable:
+                    if self.verbose:
+                        print(f"Immutable, cannot add missing {special_word}")
+                else:
                     self._words.append(special_word)
                     if self.verbose:
-                        print("Adding new word to vocabulary: {}".format(special_word))
-                else:
-                    if self.verbose:
-                        print("Immutable, cannot add missing {}".format(special_word))
+                        print(f"Adding new word to vocabulary: {special_word}")
         # Create word_index and word_string dictionaries.
         self.word_index = {word: index for index, word in enumerate(self._words)}
         self.word_string = {index: word for word, index in self.word_index.items()}
@@ -87,11 +86,10 @@ class Vocabulary:
     Returns:
       Index for the given word string.
     """
-        if not unk_default:
-            assert word in self.word_index, "{0} missing in vocabulary!".format(word)
-            return self.word_index[word]
-        else:
+        if unk_default:
             return self.word_index.get(word, self.word_index["<unk>"])
+        assert word in self.word_index, "{0} missing in vocabulary!".format(word)
+        return self.word_index[word]
 
     def set_vocabulary_state(self, state):
         """Given a state (list of words), setup the vocabulary object state.
@@ -114,10 +112,9 @@ class Vocabulary:
         """Converts a tensor into a string after decoding it using vocabulary.
     """
         pad_token = self.index("<pad>")
-        string = " ".join(
+        return " ".join(
             [self.word(int(ii)) for ii in tensor.squeeze() if ii != pad_token]
         )
-        return string
 
     @property
     def vocab_size(self):

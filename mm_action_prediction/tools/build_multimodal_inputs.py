@@ -165,10 +165,12 @@ def build_multimodal_inputs(input_json_file):
             # Record action related keys.
             action_datum = dialog_action_data[round_id]
             cur_action_supervision = action_datum["action_supervision"]
-            if FLAGS.domain == "furniture":
-                if cur_action_supervision is not None:
-                    # Retain only the args of supervision.
-                    cur_action_supervision = cur_action_supervision["args"]
+            if (
+                FLAGS.domain == "furniture"
+                and cur_action_supervision is not None
+            ):
+                # Retain only the args of supervision.
+                cur_action_supervision = cur_action_supervision["args"]
 
             action_info["action_supervision"][datum_id][round_id] = (
                 cur_action_supervision
@@ -362,7 +364,7 @@ def main(_):
     for input_json_file in FLAGS.json_path:
         save_file_name = get_save_path(FLAGS.save_path, input_json_file)
         mm_inputs_split = build_multimodal_inputs(input_json_file)
-        print("Saving multimodal inputs: {}".format(save_file_name))
+        print(f"Saving multimodal inputs: {save_file_name}")
         np.save(save_file_name, np.array(mm_inputs_split))
 
 

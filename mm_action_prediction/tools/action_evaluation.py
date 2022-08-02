@@ -73,16 +73,13 @@ def evaluate_action_prediction(
             if supervision is None:
                 continue
             # Case 1: Action mismatch -- record False for all attributes.
-            if not action_match:
-                for key in supervision.keys():
-                    if key in IGNORE_ATTRIBUTES:
-                        continue
+            for key in supervision.keys():
+                if key in IGNORE_ATTRIBUTES:
+                    continue
+                            # Case 1: Action mismatch -- record False for all attributes.
+                if not action_match:
                     matches["attributes"].append(False)
-            # Case 2: Action matches -- use model predictions for attributes.
-            else:
-                for key in supervision.keys():
-                    if key in IGNORE_ATTRIBUTES:
-                        continue
+                else:
                     gt_key_vals = supervision[key]
                     model_key_vals = round_datum["attributes"][key]
                     if not len(gt_key_vals):
@@ -107,10 +104,10 @@ def evaluate_action_prediction(
                         # For furniture, this is a string -- single label prediction.
                         matches["attributes"].append(gt_key_vals == model_key_vals)
 
-    print("#Instances evaluated API: {}".format(len(matches["action"])))
+    print(f'#Instances evaluated API: {len(matches["action"])}')
     # Record and save per instance results.
     if record_instance_results:
-        print("Saving per instance result: {}".format(record_instance_results))
+        print(f"Saving per instance result: {record_instance_results}")
         with open(record_instance_results, "w") as file_id:
             json.dump(model_actions, file_id)
 
@@ -132,31 +129,30 @@ def evaluate_action_prediction(
         "attribute_accuracy": np.mean(matches["attributes"]),
         "confusion_matrix": matrix,
     }
-    if compute_std_err:
-        metrics_std_err = {
-            "action_accuracy": (
-                np.std(matches["action"]) / np.sqrt(len(matches["action"]))
-            ),
-            "action_perplexity": (
-                (
-                    np.exp(-1 * np.std(matches["perplexity"]))
-                    / np.sqrt(len(matches["perplexity"]))
-                )
-            ),
-            "attribute_accuracy": (
-                np.std(matches["attributes"]) / np.sqrt(len(matches["attributes"]))
-            ),
-        }
-        return metrics, metrics_std_err
-    else:
+    if not compute_std_err:
         return metrics
+    metrics_std_err = {
+        "action_accuracy": (
+            np.std(matches["action"]) / np.sqrt(len(matches["action"]))
+        ),
+        "action_perplexity": (
+            (
+                np.exp(-1 * np.std(matches["perplexity"]))
+                / np.sqrt(len(matches["perplexity"]))
+            )
+        ),
+        "attribute_accuracy": (
+            np.std(matches["attributes"]) / np.sqrt(len(matches["attributes"]))
+        ),
+    }
+    return metrics, metrics_std_err
 
 
 def main(args):
-    print("Reading: {}".format(args["action_json_path"]))
+    print(f'Reading: {args["action_json_path"]}')
     with open(args["action_json_path"], "r") as file_id:
         gt_actions = json.load(file_id)
-    print("Reading: {}".format(args["model_output_path"]))
+    print(f'Reading: {args["model_output_path"]}')
     with open(args["model_output_path"], "r") as file_id:
         model_actions = json.load(file_id)
 

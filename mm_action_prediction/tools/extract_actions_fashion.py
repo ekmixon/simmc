@@ -30,7 +30,7 @@ def extract_actions(input_json_file):
     Args:
         input_json_file: JSON data file to extraction actions
     """
-    print("Reading: {}".format(input_json_file))
+    print(f"Reading: {input_json_file}")
     with open(input_json_file, "r") as file_id:
         raw_data = json.load(file_id)
 
@@ -42,7 +42,7 @@ def extract_actions(input_json_file):
         # Could lead to problems but it is for < 0.1% of the data
         if "dialogue_task_id" not in dialog_datum:
             # Assign a random task for missing ids.
-            print("Dialogue task Id missing: {}".format(dialog_id))
+            print(f"Dialogue task Id missing: {dialog_id}")
             mm_state = task_mapping[1874]
         else:
             mm_state = task_mapping[dialog_datum["dialogue_task_id"]]
@@ -78,7 +78,6 @@ def extract_actions(input_json_file):
                     }
                 else:
                     print("Undefined action; using None instead")
-                roundwise_actions.append(insert_item)
             else:
                 # Check for SpecifyInfo action.
                 # Get information attributes given the asset id.
@@ -96,8 +95,7 @@ def extract_actions(input_json_file):
                         if "DA:REQUEST:ADD_TO_CART" in intent_info["intent"]:
                             insert_item["action"] = "AddToCart"
                             insert_item["action_supervision"] = None
-                roundwise_actions.append(insert_item)
-
+            roundwise_actions.append(insert_item)
         dialogs.append(
             {
                 "dialog_id": dialog_id,
@@ -109,7 +107,7 @@ def extract_actions(input_json_file):
     # Save extracted API calls.
     save_path = input_json_file.split("/")[-1].replace(".json", "_api_calls.json")
     save_path = os.path.join(FLAGS.save_root, save_path)
-    print("Saving: {}".format(save_path))
+    print(f"Saving: {save_path}")
     with open(save_path, "w") as f:
         json.dump(dialogs, f)
 

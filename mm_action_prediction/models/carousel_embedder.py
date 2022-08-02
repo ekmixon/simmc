@@ -95,8 +95,7 @@ class CarouselEmbedder(nn.Module):
             carousel_states,
             key_padding_mask=self.carousel_mask[carousel_len - 1],
         )
-        carousel_encode = torch.cat([attended_query.squeeze(0), encoder_state], dim=-1)
-        return carousel_encode
+        return torch.cat([attended_query.squeeze(0), encoder_state], dim=-1)
 
     def empty_carousel(self, carousel_state):
         """Check if carousel is empty in the standard representation.
@@ -126,7 +125,7 @@ class CarouselEmbedder(nn.Module):
         self.zero_tensor.fill_(0.0)
         for num_items in range(4):
             states = [self.carousel_pos[ii] for ii in self.positions[:num_items]]
-            states += [self.carousel_pos["empty"] for ii in range(3 - num_items)]
+            states += [self.carousel_pos["empty"] for _ in range(3 - num_items)]
             states = torch.stack(states, dim=0)
             self.occupancy_states[num_items] = states
             embeds = [self.zero_tensor for _ in range(3 - num_items)]

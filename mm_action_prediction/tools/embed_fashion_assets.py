@@ -63,7 +63,7 @@ def main(args):
         embeddings.append(np.concatenate(embed_vector))
         id_list.append(asset["id"])
     embeddings = np.stack(embeddings)
-    print("Saving embeddings: {}".format(args["embed_path"]))
+    print(f'Saving embeddings: {args["embed_path"]}')
     np.save(
         args["embed_path"],
         {

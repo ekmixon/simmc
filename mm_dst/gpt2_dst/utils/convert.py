@@ -73,8 +73,7 @@ def convert_json_to_flattened(
         # we track new OOVs
         oov = set()
 
-    for _, dialog in enumerate(data):
-
+    for dialog in data:
         prev_asst_uttr = None
         lst_context = []
 
@@ -93,7 +92,7 @@ def convert_json_to_flattened(
             # Add multimodal contexts
             if use_multimodal_contexts:
                 visual_objects = turn[FIELDNAME_VISUAL_OBJECTS]
-                context += ' ' + represent_visual_objects(visual_objects)
+                context += f' {represent_visual_objects(visual_objects)}'
 
             # Concat with previous contexts
             lst_context.append(context)
@@ -176,13 +175,11 @@ def represent_visual_objects(visual_objects):
 
     list_str_objects = []
     for obj_name, obj in visual_objects.items():
-        s = obj_name + ' :'
+        s = f'{obj_name} :'
         for target_attribute in target_attributes:
             if target_attribute in obj:
                 target_value = obj.get(target_attribute)
-                if target_value == '' or target_value == []:
-                    pass
-                else:
+                if target_value not in ['', []]:
                     s += f' {target_attribute} {str(target_value)}'
         list_str_objects.append(s)
 
@@ -232,25 +229,25 @@ def parse_flattened_result(to_parse):
         to_parse = splits[1].strip()
         splits = to_parse.split(END_OF_BELIEF)
 
-        if len(splits) == 2:
-            # to_parse: 'DIALOG_ACT_1 : [ SLOT_NAME = SLOT_VALUE, ... ] ...'
-            to_parse = splits[0].strip()
+    if len(splits) == 2:
+        # to_parse: 'DIALOG_ACT_1 : [ SLOT_NAME = SLOT_VALUE, ... ] ...'
+        to_parse = splits[0].strip()
 
-            for dialog_act in dialog_act_regex.finditer(to_parse):
-                d = {
-                    'act': dialog_act.group(1),
-                    'slots': []
-                }
+        for dialog_act in dialog_act_regex.finditer(to_parse):
+            d = {
+                'act': dialog_act.group(1),
+                'slots': []
+            }
 
-                for slot in slot_regex.finditer(dialog_act.group(2)):
-                    d['slots'].append(
-                        [
-                            slot.group(1).strip(),
-                            slot.group(2).strip()
-                        ]
-                    )
+            for slot in slot_regex.finditer(dialog_act.group(2)):
+                d['slots'].append(
+                    [
+                        slot.group(1).strip(),
+                        slot.group(2).strip()
+                    ]
+                )
 
-                if d != {}:
-                    belief.append(d)
+            if d != {}:
+                belief.append(d)
 
     return belief

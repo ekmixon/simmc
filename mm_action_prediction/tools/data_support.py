@@ -119,7 +119,7 @@ def read_furniture_metadata(metadata_path):
     Returns:
         assets: Dictionary of assets with attribute dictionary
     """
-    print("Reading: {}".format(metadata_path))
+    print(f"Reading: {metadata_path}")
     with open(metadata_path, "r") as file_id:
         csv_reader = csv.reader(file_id)
         rows = list(csv_reader)
@@ -197,13 +197,10 @@ class FurnitureDatabase:
         SELECT class_name, min(sale_price), max(sale_price) FROM {self.METADATA_TABLE}
         GROUP BY class_name
         """)
-        price_dict = {}
-        for row in self.cur.fetchall():
-            price_dict[row['class_name']] = (
-                row['min(sale_price)'],
-                row['max(sale_price)']
-            )
-        return price_dict
+        return {
+            row['class_name']: (row['min(sale_price)'], row['max(sale_price)'])
+            for row in self.cur.fetchall()
+        }
 
     def search_furniture(self, args):
         """ Search sqlite METADATA_TABLE using given arguments
@@ -242,7 +239,7 @@ class FurnitureDatabase:
             op = arg_map[arg]['operator']
             # assuming ignore min and max price if -1 or 0.0
             if (field == 'sale_price' and value > 0) or \
-                    (field != 'sale_price' and value):
+                        (field != 'sale_price' and value):
                 where.append(f'{field} {op} ?')
                 if op == 'LIKE':
                     values.append(f"%{value}%")
@@ -285,10 +282,7 @@ class FurnitureDatabase:
     def _dict_factory(cursor, row):
         """Static method to return query results formatted as a dict per row
         """
-        d = {}
-        for idx, col in enumerate(cursor.description):
-            d[col[0]] = row[idx]
-        return d
+        return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
 
 
 def get_intents(speaker, round_datum):
@@ -311,8 +305,7 @@ def get_intents(speaker, round_datum):
         )
     # note annotation stored as python in a string
     annotation = ast.literal_eval(round_datum[key])
-    all_intents = [ii["intent"] for ii in annotation]
-    return all_intents
+    return [ii["intent"] for ii in annotation]
 
 
 def get_object_references(turn_label, reversed_dialog_coref_map):

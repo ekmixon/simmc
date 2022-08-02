@@ -80,8 +80,12 @@ class TextDataset(Dataset):
 
         tokenized_text = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(text))
 
-        for i in range(0, len(tokenized_text) - block_size + 1, block_size):  # Truncate in block of block_size
-            self.examples.append(tokenizer.build_inputs_with_special_tokens(tokenized_text[i : i + block_size]))
+        self.examples.extend(
+            tokenizer.build_inputs_with_special_tokens(
+                tokenized_text[i : i + block_size]
+            )
+            for i in range(0, len(tokenized_text) - block_size + 1, block_size)
+        )
 
     def __len__(self):
         return len(self.examples)
@@ -140,13 +144,16 @@ def set_seed(args):
 def _sorted_checkpoints(args, checkpoint_prefix="checkpoint", use_mtime=False) -> List[str]:
     ordering_and_checkpoint_path = []
 
-    glob_checkpoints = glob.glob(os.path.join(args.output_dir, "{}-*".format(checkpoint_prefix)))
+    glob_checkpoints = glob.glob(
+        os.path.join(args.output_dir, f"{checkpoint_prefix}-*")
+    )
+
 
     for path in glob_checkpoints:
         if use_mtime:
             ordering_and_checkpoint_path.append((os.path.getmtime(path), path))
         else:
-            regex_match = re.match(".*{}-([0-9]+)".format(checkpoint_prefix), path)
+            regex_match = re.match(f".*{checkpoint_prefix}-([0-9]+)", path)
             if regex_match and regex_match.groups():
                 ordering_and_checkpoint_path.append((int(regex_match.groups()[0]), path))
 
@@ -169,7 +176,10 @@ def _rotate_checkpoints(args, checkpoint_prefix="checkpoint", use_mtime=False) -
     number_of_checkpoints_to_delete = max(0, len(checkpoints_sorted) - args.save_total_limit)
     checkpoints_to_be_deleted = checkpoints_sorted[:number_of_checkpoints_to_delete]
     for checkpoint in checkpoints_to_be_deleted:
-        logger.info("Deleting older checkpoint [{}] due to args.save_total_limit".format(checkpoint))
+        logger.info(
+            f"Deleting older checkpoint [{checkpoint}] due to args.save_total_limit"
+        )
+
         shutil.rmtree(checkpoint)
 
 

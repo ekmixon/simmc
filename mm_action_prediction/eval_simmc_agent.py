@@ -20,7 +20,7 @@ def main(args):
     """Evaluate model and save the results.
     """
     # Read the checkpoint and train args.
-    print("Loading checkpoint: {}".format(args["checkpoint"]))
+    print(f'Loading checkpoint: {args["checkpoint"]}')
     checkpoint = torch.load(args["checkpoint"], map_location=torch.device("cpu"))
     saved_args = checkpoint["args"]
     saved_args.update(args)
@@ -36,7 +36,7 @@ def main(args):
         "data_read_path": args["eval_data_path"],
         "get_retrieval_candidates": True
     }
-    dataloader_args.update(saved_args)
+    dataloader_args |= saved_args
     val_loader = loaders.DataloaderSIMMC(dataloader_args)
     saved_args.update(val_loader.get_data_related_arguments())
 
@@ -48,7 +48,7 @@ def main(args):
     # Evaluate the SIMMC model.
     eval_dict, eval_outputs = evaluate_agent(wizard, val_loader, saved_args)
     save_path = saved_args["checkpoint"].replace(".tar", "_eval.json")
-    print("Saving results: {}".format(save_path))
+    print(f"Saving results: {save_path}")
     with open(save_path, "w") as file_id:
         json.dump(eval_dict, file_id)
 
@@ -66,7 +66,7 @@ def evaluate_agent(wizard, val_loader, args):
     with torch.no_grad():
         wizard.eval()
         matches = []
-        for batch in progressbar(val_loader.get_batch(), total=int(total_iters)):
+        for batch in progressbar(val_loader.get_batch(), total=total_iters):
             if args["bleu_evaluation"]:
                 mode = {"next_token": "ARGMAX", "beam_size": 5}
             else:
@@ -152,7 +152,7 @@ def evaluate_agent(wizard, val_loader, args):
         "action_perplexity": action_metrics["action_perplexity"],
         "action_attribute": action_metrics["attribute_accuracy"]
     }
-    eval_dict.update(retrieval_metrics)
+    eval_dict |= retrieval_metrics
     eval_outputs = {
         "model_actions": action_predictions,
         "model_responses": model_responses

@@ -93,7 +93,7 @@ def extract_action_attributes(args):
         for key, val in attr_values.items()
     }
     print(attr_vocab)
-    print("Saving attribute dictionary: {}".format(args["vocab_save_path"]))
+    print(f'Saving attribute dictionary: {args["vocab_save_path"]}')
     with open(args["vocab_save_path"], "w") as file_id:
         json.dump(attr_vocab, file_id)
 
@@ -108,7 +108,7 @@ def print_fashion_attributes(attribute_vocabulary):
         print(key)
         print(val.keys())
         for attr, attr_val_dict in val.items():
-            print('Name: {}'.format(attr))
+            print(f'Name: {attr}')
             for ii in sorted(
                 attr_val_dict.items(), key=lambda x: x[1], reverse=True
             ):

@@ -93,11 +93,7 @@ def evaluate_turn(true_turn, pred_turn):
     for frame_idx in range(len(true_turn)):
         # For each frame
         true_frame = true_turn[frame_idx]
-        if frame_idx >= len(pred_turn):
-            pred_frame = {}
-        else:
-            pred_frame = pred_turn[frame_idx]
-
+        pred_frame = {} if frame_idx >= len(pred_turn) else pred_turn[frame_idx]
         count_dict = add_dicts(
             count_dict,
             evaluate_frame(true_frame, pred_frame, strict=False))
@@ -131,18 +127,14 @@ def evaluate_frame(true_frame, pred_frame, strict=True):
     count_dict['n_pred_acts'] += 'act' in pred_frame
 
     # Compare Slots
-    true_frame_slot_values = \
-        set(f'{k}={v}' for k, v in true_frame.get('slots', []))
+    true_frame_slot_values = {f'{k}={v}' for k, v in true_frame.get('slots', [])}
 
-    pred_frame_slot_values = \
-        set(f'{k}={v}' for k, v in pred_frame.get('slots', []))
+    pred_frame_slot_values = {f'{k}={v}' for k, v in pred_frame.get('slots', [])}
 
     count_dict['n_true_slots'] += len(true_frame_slot_values)
     count_dict['n_pred_slots'] += len(pred_frame_slot_values)
 
-    if strict and not b_correct_act:
-        pass
-    else:
+    if not strict or b_correct_act:
         count_dict['n_correct_slots'] += \
             len(true_frame_slot_values.intersection(pred_frame_slot_values))
 
@@ -168,8 +160,7 @@ def d_f1(n_true, n_pred, n_correct):
     p = n_correct / n_pred
     f1 = 2 * p * r / (p + r)
 
-    d_f1 = 0.5 * f1**2 * (dr / r**2 + dp / p**2)
-    return d_f1
+    return 0.5 * f1**2 * (dr / r**2 + dp / p**2)
 
 
 def b_stderr(n_total, n_pos):
